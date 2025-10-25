@@ -8,20 +8,29 @@ from typing import Callable
 
 from ..models import ClockUnit
 
-CARD_BG = "#ffffff"
-SURFACE_BG = "#f3f2f0"
+CARD_BG = "#fdfcf9"
+SURFACE_BG = "#eceff4"
 ACCENT_BLUE = "#4e7bff"
-ACCENT_BLUE_DUE = "#2e53d6"
+ACCENT_BLUE_DUE = "#2a4fd9"
 TEXT_PRIMARY = "#1f2933"
 TEXT_SECONDARY = "#6b7280"
-PILL_BG = "#e4e7eb"
+PILL_BG = "#e4e8ef"
 PILL_TEXT = "#4a5568"
-TREND_BAR = "#cad5ff"
-TREND_BG = "#f8f9fb"
+TREND_BAR = "#c8d6ff"
+TREND_BG = "#f6f7fb"
+CANVAS_SIZE = 112
+RING_THICKNESS = 8
+MIN_SCALE = 0.5
+MAX_SCALE = 1.2
+BASE_CARD_WIDTH = CANVAS_SIZE + 96
 
 
 class ClockCard(tk.Frame):
     """Encapsulates the circular timer UI and controls."""
+
+    BASE_WIDTH = BASE_CARD_WIDTH
+    MIN_SCALE = MIN_SCALE
+    MAX_SCALE = MAX_SCALE
 
     def __init__(
         self,
@@ -48,7 +57,7 @@ class ClockCard(tk.Frame):
         self._on_open_settings = on_open_settings
 
         self.card = tk.Frame(self, bg=CARD_BG, bd=0, relief="flat")
-        self.card.pack(padx=6, pady=6, fill="both", expand=True)
+        self.card.pack(padx=4, pady=4, fill="both", expand=True)
 
         self.header = tk.Frame(self.card, bg=CARD_BG)
         self.header.pack(fill="x", pady=(4, 0), padx=8)
@@ -58,7 +67,7 @@ class ClockCard(tk.Frame):
             text=identifier_label,
             bg=CARD_BG,
             fg=TEXT_SECONDARY,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 9, "bold"),
         )
         self.identifier_label.pack(side="left")
 
@@ -70,7 +79,7 @@ class ClockCard(tk.Frame):
             text=self._expand_icon(),
             bg=CARD_BG,
             fg=TEXT_SECONDARY,
-            font=("Segoe UI Symbol", 10),
+            font=("Segoe UI Symbol", 9),
             cursor="hand2",
         )
         self.expand_btn.pack(side="left", padx=(0, 4))
@@ -86,7 +95,7 @@ class ClockCard(tk.Frame):
             text="⚙",
             bg=CARD_BG,
             fg=TEXT_SECONDARY,
-            font=("Segoe UI Symbol", 10),
+            font=("Segoe UI Symbol", 9),
             cursor="hand2",
         )
         self.settings_btn.pack(side="left")
@@ -99,19 +108,25 @@ class ClockCard(tk.Frame):
 
         self.ring_canvas = tk.Canvas(
             self.card,
-            width=210,
-            height=210,
+            width=CANVAS_SIZE,
+            height=CANVAS_SIZE,
             bg=CARD_BG,
             highlightthickness=0,
             bd=0,
         )
-        self.ring_canvas.pack(padx=8, pady=(8, 4))
+        self.ring_canvas.pack(padx=8, pady=(6, 4))
 
-        self._ring_bounds = (15, 15, 195, 195)
+        padding = RING_THICKNESS + 6
+        self._ring_bounds = (
+            padding,
+            padding,
+            CANVAS_SIZE - padding,
+            CANVAS_SIZE - padding,
+        )
         self.base_circle = self.ring_canvas.create_oval(
             *self._ring_bounds,
             outline="#d9dde2",
-            width=12,
+            width=RING_THICKNESS,
         )
         self.progress_arc = self.ring_canvas.create_arc(
             *self._ring_bounds,
@@ -119,8 +134,7 @@ class ClockCard(tk.Frame):
             extent=0,
             style="arc",
             outline=ACCENT_BLUE,
-            width=12,
-            capstyle=tk.ROUND,
+            width=RING_THICKNESS,
         )
 
         self.task_var = tk.StringVar(value=self.clock.label)
@@ -130,17 +144,17 @@ class ClockCard(tk.Frame):
             justify="center",
             bd=0,
             highlightthickness=0,
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             fg=TEXT_PRIMARY,
             bg=CARD_BG,
             insertbackground=ACCENT_BLUE,
         )
 
         self.entry_window = self.ring_canvas.create_window(
-            105,
-            102,
+            CANVAS_SIZE / 2,
+            CANVAS_SIZE / 2 - 4,
             window=self.task_entry,
-            width=165,
+            width=CANVAS_SIZE - 40,
         )
 
         self.task_entry.bind("<FocusOut>", self._handle_task_update)
@@ -149,26 +163,26 @@ class ClockCard(tk.Frame):
         self.interval_label = tk.Label(
             self.card,
             text=self._interval_text(),
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 9),
             bg=CARD_BG,
             fg=PILL_TEXT,
             padx=10,
             pady=4,
         )
-        self.interval_label.pack(pady=(0, 12))
+        self.interval_label.pack(pady=(0, 8))
         self.interval_label.configure(
             relief="flat", bd=0, highlightthickness=0
         )
         self.interval_label.bind("<Configure>", self._round_interval_bg)
 
         self.controls = tk.Frame(self.card, bg=CARD_BG)
-        self.controls.pack(pady=(0, 12))
+        self.controls.pack(pady=(0, 8))
 
         self.pause_button = tk.Button(
             self.controls,
             text=self._pause_icon(),
             font=("Segoe UI Symbol", 11),
-            width=3,
+            width=2,
             relief="flat",
             bg=ACCENT_BLUE,
             fg="#ffffff",
@@ -183,7 +197,7 @@ class ClockCard(tk.Frame):
             self.controls,
             text="⟳",
             font=("Segoe UI Symbol", 11),
-            width=3,
+            width=2,
             relief="groove",
             bg="#ffffff",
             fg=TEXT_SECONDARY,
@@ -204,22 +218,22 @@ class ClockCard(tk.Frame):
             self._apply_check_base_state,
         )
 
-        self.detail_frame = tk.Frame(self.card, bg=TREND_BG, bd=0, padx=12, pady=12)
+        self.detail_frame = tk.Frame(self.card, bg=TREND_BG, bd=0, padx=10, pady=10)
         self.summary_label = tk.Label(
             self.detail_frame,
             text=self._detail_text(),
             bg=TREND_BG,
             fg=TEXT_SECONDARY,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 8),
             justify="center",
-            wraplength=180,
+            wraplength=CANVAS_SIZE - 20,
         )
         self.summary_label.pack(fill="x")
 
         self.trend_canvas = tk.Canvas(
             self.detail_frame,
-            width=170,
-            height=48,
+            width=CANVAS_SIZE - 16,
+            height=44,
             bg=TREND_BG,
             highlightthickness=0,
             bd=0,
@@ -231,18 +245,18 @@ class ClockCard(tk.Frame):
             text="Past 5 days",
             bg=TREND_BG,
             fg=TEXT_SECONDARY,
-            font=("Segoe UI", 8),
+            font=("Segoe UI", 7),
         )
         self.trend_caption.pack()
 
-        controls = tk.Frame(self.detail_frame, bg=TREND_BG)
-        controls.pack(fill="x", pady=(8, 0))
+        self.history_controls = tk.Frame(self.detail_frame, bg=TREND_BG)
+        self.history_controls.pack(fill="x", pady=(8, 0))
 
         self.history_var = tk.IntVar(value=self.clock.history_window or 5)
         self.history_buttons: dict[int, tk.Button] = {}
         for window in (5, 7, 14):
             btn = tk.Button(
-                controls,
+                self.history_controls,
                 text=f"{window}d",
                 command=lambda value=window: self._handle_history_change(value),
                 bg="#ffffff",
@@ -250,13 +264,13 @@ class ClockCard(tk.Frame):
                 font=("Segoe UI", 9),
                 relief="flat",
                 bd=0,
-                padx=10,
-                pady=4,
+                padx=8,
+                pady=3,
                 cursor="hand2",
                 activebackground="#e5edff",
                 activeforeground=ACCENT_BLUE,
             )
-            btn.pack(side="left", padx=4)
+            btn.pack(side="left", padx=2, expand=True, fill="x")
             self.history_buttons[window] = btn
             self._bind_hover(
                 btn,
@@ -275,7 +289,7 @@ class ClockCard(tk.Frame):
             text="Share",
             bg="#ffffff",
             fg=TEXT_SECONDARY,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 9, "bold"),
             relief="flat",
             bd=0,
             padx=10,
@@ -283,7 +297,7 @@ class ClockCard(tk.Frame):
             cursor="hand2",
             command=self._handle_share,
         )
-        self.export_button.pack(pady=(10, 0))
+        self.export_button.pack(pady=(8, 0), fill="x")
         self._bind_hover(
             self.export_button,
             lambda: self.export_button.configure(bg="#e5edff", fg=ACCENT_BLUE),
@@ -297,6 +311,7 @@ class ClockCard(tk.Frame):
 
         self._is_due = False
         self._display_ratio = self.clock.progress_ratio()
+        self.update_scale(1.0)
         self._apply_check_base_state()
         self.update_progress()
 
@@ -399,6 +414,102 @@ class ClockCard(tk.Frame):
     def _handle_share(self) -> None:
         self._on_share(self.clock)
 
+    def update_scale(self, scale: float) -> None:
+        scale = max(MIN_SCALE, min(MAX_SCALE, scale))
+        previous = getattr(self, "_scale", None)
+        if previous is not None and abs(previous - scale) < 0.02:
+            return
+        self._scale = scale
+
+        size = max(76, int(CANVAS_SIZE * scale))
+        ring = max(4, int(RING_THICKNESS * scale))
+        padding = ring + int(4 * scale)
+        bounds = (
+            padding,
+            padding,
+            size - padding,
+            size - padding,
+        )
+        self._ring_bounds = bounds
+        self.ring_canvas.config(width=size, height=size)
+        self.ring_canvas.coords(self.base_circle, *bounds)
+        self.ring_canvas.coords(self.progress_arc, *bounds)
+        self.ring_canvas.itemconfigure(self.base_circle, width=ring)
+        self.ring_canvas.itemconfigure(self.progress_arc, width=ring)
+        self.ring_canvas.pack_configure(
+            padx=max(4, int(6 * scale)), pady=(max(2, int(3 * scale)), max(2, int(3 * scale)))
+        )
+        self.ring_canvas.coords(
+            self.entry_window,
+            size / 2,
+            size / 2 - 3 * scale,
+        )
+        self.ring_canvas.itemconfigure(
+            self.entry_window,
+            width=max(40, size - int(24 * scale)),
+        )
+
+        header_font = max(7, int(9 * scale))
+        icon_font = max(7, int(9 * scale))
+        self.identifier_label.configure(font=("Segoe UI", header_font, "bold"))
+        self.expand_btn.configure(font=("Segoe UI Symbol", icon_font))
+        self.settings_btn.configure(font=("Segoe UI Symbol", icon_font))
+        self.header.pack_configure(
+            padx=max(6, int(6 * scale)), pady=(max(3, int(3 * scale)), 0)
+        )
+
+        task_font = max(9, int(12 * scale))
+        self.task_entry.configure(font=("Segoe UI", task_font, "bold"))
+
+        interval_font = max(7, int(9 * scale))
+        self.interval_label.configure(
+            font=("Segoe UI", interval_font),
+            padx=max(6, int(8 * scale)),
+            pady=max(2, int(3 * scale)),
+        )
+        self.interval_label.pack_configure(pady=(0, max(4, int(6 * scale))))
+
+        button_font = max(8, int(11 * scale))
+        self.pause_button.configure(
+            font=("Segoe UI Symbol", button_font),
+            width=max(2, int(2 * scale)),
+        )
+        self.check_button.configure(
+            font=("Segoe UI Symbol", button_font),
+            width=max(2, int(2 * scale)),
+        )
+        self.controls.pack_configure(pady=(0, max(4, int(6 * scale))))
+
+        detail_pad = max(6, int(8 * scale))
+        self.detail_frame.configure(padx=detail_pad, pady=detail_pad)
+        summary_font = max(7, int(8 * scale))
+        self.summary_label.configure(
+            font=("Segoe UI", summary_font),
+            wraplength=max(80, size - int(12 * scale)),
+        )
+
+        trend_width = max(60, size - int(12 * scale))
+        trend_height = max(28, int(44 * scale))
+        self.trend_canvas.config(width=trend_width, height=trend_height)
+
+        caption_font = max(6, int(7 * scale))
+        self.trend_caption.configure(font=("Segoe UI", caption_font))
+        self.history_controls.pack_configure(pady=(max(6, int(6 * scale)), 0))
+        history_font = max(7, int(9 * scale))
+        for window, button in self.history_buttons.items():
+            button.configure(font=("Segoe UI", history_font))
+            button.pack_configure(padx=max(1, int(2 * scale)))
+        self._refresh_history_buttons()
+
+        share_font = max(8, int(9 * scale))
+        self.export_button.configure(
+            font=("Segoe UI", share_font, "bold"),
+            padx=max(8, int(8 * scale)),
+            pady=max(4, int(4 * scale)),
+        )
+
+        self._update_arc_extent()
+
     def set_due(self, value: bool) -> None:
         if self._is_due == value:
             return
@@ -423,6 +534,7 @@ class ClockCard(tk.Frame):
             self._show_details()
         else:
             self._hide_details()
+        self._update_arc_extent()
 
     def refresh_label(self) -> None:
         self.task_var.set(self.clock.label)
@@ -524,6 +636,10 @@ class ClockCard(tk.Frame):
 
         easing = 0.08 + min(0.25, abs(delta) * 0.6)
         return current + delta * easing
+
+    def _update_arc_extent(self) -> None:
+        extent = max(-360 * getattr(self, "_display_ratio", 0.0), -360)
+        self.ring_canvas.itemconfigure(self.progress_arc, extent=extent)
 
     def _bind_hover(
         self,

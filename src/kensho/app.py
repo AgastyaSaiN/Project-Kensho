@@ -12,7 +12,7 @@ from .storage import load_app_state, save_app_state
 from .ui.clock_card import ClockCard
 from .ui.settings_dialog import ClockSettingsDialog
 
-DEFAULT_GEOMETRY = "314x398+120+120"
+DEFAULT_GEOMETRY = "220x280+120+120"
 WINDOW_STATE_KEY = "window"
 ACCENT_BLUE = "#4e7bff"
 TICK_INTERVAL_MS = 250
@@ -42,7 +42,7 @@ class KenshoApp:
             self.state.get(WINDOW_STATE_KEY, {}).get("geometry") or DEFAULT_GEOMETRY
         )
         self.root.geometry(geometry)
-        self.root.minsize(240, 280)
+        self.root.minsize(150, 160)
 
         self._geometry_dirty = False
         self._throttle_job: Optional[str] = None
@@ -51,7 +51,7 @@ class KenshoApp:
         self.root.bind("<Configure>", self._on_configure)
 
         # Placeholder container for upcoming clock cards
-        self.content = tk.Frame(self.root, bg="#f3f2f0", padx=16, pady=16)
+        self.content = tk.Frame(self.root, bg="#f3f2f0", padx=10, pady=10)
         self.content.pack(fill="both", expand=True)
 
         self.card_container = tk.Frame(self.content, bg="#f3f2f0")
@@ -59,11 +59,12 @@ class KenshoApp:
 
         self.clock_units: List[ClockUnit] = []
         self.clock_cards: List[ClockCard] = []
+        self._add_button_visible = True
 
         self.add_card_button = tk.Button(
             self.card_container,
             text="+",
-            font=("Segoe UI", 24),
+            font=("Segoe UI", 18, "bold"),
             width=2,
             bg="#ffffff",
             fg=ACCENT_BLUE,
@@ -72,10 +73,12 @@ class KenshoApp:
             command=self.add_clock,
             cursor="hand2",
         )
-        self.add_card_button.pack(side="left", padx=8, pady=8, fill="y")
+        self.add_card_button.pack(side="left", padx=6, pady=6, fill="y")
 
         self._ticker_job: Optional[str] = None
         self._settings_dialog: Optional[ClockSettingsDialog] = None
+        self._layout_mode: Optional[str] = None
+        self._layout_job: Optional[str] = None
 
         self._load_clocks()
         self._start_ticker()
@@ -92,6 +95,7 @@ class KenshoApp:
 
         # Save after the user stops moving/resizing for 300ms.
         self._throttle_job = self.root.after(300, self._persist_geometry)
+        self._schedule_layout()
 
     def _persist_geometry(self) -> None:
         if not self._geometry_dirty:
@@ -101,6 +105,7 @@ class KenshoApp:
         self.state.setdefault(WINDOW_STATE_KEY, {})["geometry"] = geometry
         save_app_state(self.state)
         self._throttle_job = None
+        self._schedule_layout()
 
     def on_close(self) -> None:
         """Persist window state and destroy the root window."""
@@ -132,10 +137,78 @@ class KenshoApp:
             self._append_clock(default_clock)
         self._refresh_identifier_labels()
         self._update_add_button_visibility()
+        self._schedule_layout()
+
+    def _schedule_layout(self) -> None:
+        if self._layout_job is not None:
+            return
+        self._layout_job = self.root.after(40, self._apply_layout)
+
+    def _apply_layout(self) -> None:
+        self._layout_job = None
+        container_width = self.card_container.winfo_width()
+        if container_width <= 1:
+            container_width = self.root.winfo_width()
+
+        layout = "column" if container_width < 420 else "row"
+        if len(self.clock_cards) > 2 and container_width < 640:
+            layout = "column"
+
+        gap = 12
+        base_width = getattr(ClockCard, "BASE_WIDTH", 200)
+        min_scale = getattr(ClockCard, "MIN_SCALE", 0.5)
+        max_scale = getattr(ClockCard, "MAX_SCALE", 1.2)
+        btn_scale = 1.0
+
+        if layout == "column":
+            available_width = max(100, container_width - 16)
+            scale = max(
+                min_scale,
+                min(max_scale, available_width / base_width),
+            )
+            btn_scale = scale
+        else:
+            cards_count = max(1, len(self.clock_cards))
+            visible_slots = cards_count + (1 if self._add_button_visible else 0)
+            available = max(
+                120, container_width - gap * max(visible_slots - 1, 0)
+            )
+            button_allowance = 48 if self._add_button_visible else 0
+            available_for_cards = max(80, available - button_allowance)
+            per_card = max(80, available_for_cards / cards_count)
+            scale = max(
+                min_scale,
+                min(max_scale, per_card / base_width),
+            )
+            btn_scale = scale
+
+        for card in self.clock_cards:
+            card.update_scale(scale)
+
+        for widget in self.card_container.pack_slaves():
+            widget.pack_forget()
+
+        self._layout_mode = layout
+        if layout == "column":
+            for card in self.clock_cards:
+                card.pack(side="top", fill="x", padx=6, pady=6)
+            if self._add_button_visible:
+                self.add_card_button.pack(side="top", padx=6, pady=6, fill="x")
+            else:
+                self.add_card_button.pack_forget()
+        else:
+            for card in self.clock_cards:
+                card.pack(side="left", padx=6, pady=6)
+            if self._add_button_visible:
+                self.add_card_button.pack(side="left", padx=6, pady=6, fill="y")
+            else:
+                self.add_card_button.pack_forget()
+
+        btn_font = max(9, int(14 * btn_scale))
+        self.add_card_button.configure(font=("Segoe UI", btn_font, "bold"))
 
     def _append_clock(self, clock: ClockUnit) -> None:
         self.clock_units.append(clock)
-        self.add_card_button.pack_forget()
         card = ClockCard(
             self.card_container,
             clock,
@@ -150,10 +223,10 @@ class KenshoApp:
                 len(self.clock_units) - 1
             ),
         )
-        card.pack(side="left", padx=8, pady=8)
         self.clock_cards.append(card)
         self._update_add_button_visibility()
         card.update_progress()
+        self._schedule_layout()
 
     def add_clock(self) -> None:
         if len(self.clock_units) >= 4:
@@ -337,9 +410,10 @@ class KenshoApp:
         self._persist_clocks()
 
     def _update_add_button_visibility(self) -> None:
-        self.add_card_button.pack_forget()
-        if len(self.clock_units) < 4:
-            self.add_card_button.pack(side="left", padx=8, pady=8, fill="y")
+        self._add_button_visible = len(self.clock_units) < 4
+        if not self._add_button_visible:
+            self.add_card_button.pack_forget()
+        self._schedule_layout()
 
     def _remove_clock(self, clock: ClockUnit, card: ClockCard) -> None:
         try:

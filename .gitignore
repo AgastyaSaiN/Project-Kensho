@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.htmlcov/
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# App state
+/data/app_state.json
+
+# Misc
+.DS_Store
+Thumbs.db
