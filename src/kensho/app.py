@@ -27,7 +27,10 @@ class KenshoApp:
         self.root.title("Kenshō")
         self.root.configure(bg="#f3f2f0")
         self.root.resizable(True, True)
-        self.root.attributes("-topmost", True)
+        self.root.option_add("*Font", "{Segoe UI} 10")
+        self.root.option_add("*Button.Cursor", "hand2")
+
+        window_state = self.state.setdefault(WINDOW_STATE_KEY, {})
 
         # The toolwindow attribute reduces the title bar footprint on Windows,
         # keeping the widget compact without removing basic window controls.
@@ -38,9 +41,7 @@ class KenshoApp:
             pass
 
         # Restore geometry if available
-        geometry = (
-            self.state.get(WINDOW_STATE_KEY, {}).get("geometry") or DEFAULT_GEOMETRY
-        )
+        geometry = window_state.get("geometry") or DEFAULT_GEOMETRY
         self.root.geometry(geometry)
         self.root.minsize(150, 160)
 
@@ -49,6 +50,10 @@ class KenshoApp:
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.bind("<Configure>", self._on_configure)
+
+        self._minimal_mode = False
+        self._restore_button: Optional[tk.Button] = None
+        self._init_controls()
 
         # Placeholder container for upcoming clock cards
         self.content = tk.Frame(self.root, bg="#f3f2f0", padx=10, pady=10)
@@ -63,13 +68,18 @@ class KenshoApp:
 
         self.add_card_button = tk.Button(
             self.card_container,
-            text="+",
-            font=("Segoe UI", 18, "bold"),
-            width=2,
+            text="＋\nAdd",
+            font=("Segoe UI", 12, "bold"),
+            justify="center",
+            width=6,
+            height=3,
             bg="#ffffff",
             fg=ACCENT_BLUE,
             bd=1,
             relief="ridge",
+            activebackground="#e5edff",
+            activeforeground=ACCENT_BLUE,
+            highlightthickness=0,
             command=self.add_clock,
             cursor="hand2",
         )
@@ -82,6 +92,64 @@ class KenshoApp:
 
         self._load_clocks()
         self._start_ticker()
+
+    def _init_controls(self) -> None:
+        """Build a minimal control strip with a single toggle."""
+        self.controls_frame = tk.Frame(self.root, bg="#f3f2f0", padx=12, pady=8)
+        self.controls_frame.pack(fill="x")
+
+        self.minimize_button = tk.Button(
+            self.controls_frame,
+            text="Minimize UI",
+            font=("Segoe UI", 10, "bold"),
+            width=12,
+            bg="#ffffff",
+            fg=ACCENT_BLUE,
+            activebackground="#e5edff",
+            activeforeground=ACCENT_BLUE,
+            bd=0,
+            relief="ridge",
+            command=self._toggle_minimize,
+        )
+        self.minimize_button.pack(side="left")
+
+    def _toggle_minimize(self) -> None:
+        self._set_minimal_mode(not self._minimal_mode)
+
+    def _set_minimal_mode(self, minimized: bool) -> None:
+        if self._minimal_mode == minimized:
+            return
+        self._minimal_mode = minimized
+
+        if minimized:
+            self.controls_frame.pack_forget()
+            self.add_card_button.pack_forget()
+            if self._restore_button is None:
+                self._restore_button = tk.Button(
+                    self.root,
+                    text="Restore UI",
+                    font=("Segoe UI", 9, "bold"),
+                    bg="#ffffff",
+                    fg=ACCENT_BLUE,
+                    activebackground="#e5edff",
+                    activeforeground=ACCENT_BLUE,
+                    bd=0,
+                    relief="ridge",
+                    command=self._toggle_minimize,
+                )
+                self._restore_button.place(x=10, y=10)
+        else:
+            if self._restore_button is not None:
+                self._restore_button.destroy()
+                self._restore_button = None
+            self.controls_frame.pack(fill="x")
+            self._show_add_button_if_needed()
+        self._schedule_layout()
+
+    def _show_add_button_if_needed(self) -> None:
+        if self._add_button_visible and not self._minimal_mode:
+            if self.add_card_button.winfo_manager() != "pack":
+                self.add_card_button.pack(side="left", padx=6, pady=6, fill="y")
 
     def _on_configure(self, event: tk.Event) -> None:
         """Throttle saves when the user resizes or moves the window."""
@@ -102,7 +170,8 @@ class KenshoApp:
             return
         self._geometry_dirty = False
         geometry = self.root.winfo_geometry()
-        self.state.setdefault(WINDOW_STATE_KEY, {})["geometry"] = geometry
+        window_state = self.state.setdefault(WINDOW_STATE_KEY, {})
+        window_state["geometry"] = geometry
         save_app_state(self.state)
         self._throttle_job = None
         self._schedule_layout()
@@ -230,6 +299,12 @@ class KenshoApp:
 
     def add_clock(self) -> None:
         if len(self.clock_units) >= 4:
+            messagebox.showinfo(
+                "Maximum Reached",
+                "You can track up to four Kenshō clocks at once.\n"
+                "Pause or remove an existing clock before adding another.",
+                parent=self.root,
+            )
             return
         new_index = len(self.clock_units)
         identifier = self._generate_identifier(new_index)
@@ -411,8 +486,10 @@ class KenshoApp:
 
     def _update_add_button_visibility(self) -> None:
         self._add_button_visible = len(self.clock_units) < 4
-        if not self._add_button_visible:
+        if not self._add_button_visible or self._minimal_mode:
             self.add_card_button.pack_forget()
+        else:
+            self._show_add_button_if_needed()
         self._schedule_layout()
 
     def _remove_clock(self, clock: ClockUnit, card: ClockCard) -> None:

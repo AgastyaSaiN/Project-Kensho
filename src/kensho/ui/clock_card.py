@@ -23,6 +23,7 @@ RING_THICKNESS = 8
 MIN_SCALE = 0.5
 MAX_SCALE = 1.2
 BASE_CARD_WIDTH = CANVAS_SIZE + 96
+CARD_BORDER = "#d9dde2"
 
 
 class ClockCard(tk.Frame):
@@ -56,7 +57,15 @@ class ClockCard(tk.Frame):
         self._on_history_window_change = on_history_window_change
         self._on_open_settings = on_open_settings
 
-        self.card = tk.Frame(self, bg=CARD_BG, bd=0, relief="flat")
+        self.card = tk.Frame(
+            self,
+            bg=CARD_BG,
+            bd=0,
+            relief="flat",
+            highlightthickness=1,
+            highlightbackground=CARD_BORDER,
+            highlightcolor=CARD_BORDER,
+        )
         self.card.pack(padx=4, pady=4, fill="both", expand=True)
 
         self.header = tk.Frame(self.card, bg=CARD_BG)
@@ -175,14 +184,25 @@ class ClockCard(tk.Frame):
         )
         self.interval_label.bind("<Configure>", self._round_interval_bg)
 
+        self.countdown_label = tk.Label(
+            self.card,
+            text=self._next_ping_text(),
+            font=("Segoe UI", 10),
+            bg=CARD_BG,
+            fg=TEXT_SECONDARY,
+            wraplength=CANVAS_SIZE + 60,
+            justify="center",
+        )
+        self.countdown_label.pack(pady=(0, 6))
+
         self.controls = tk.Frame(self.card, bg=CARD_BG)
         self.controls.pack(pady=(0, 8))
 
         self.pause_button = tk.Button(
             self.controls,
             text=self._pause_icon(),
-            font=("Segoe UI Symbol", 11),
-            width=2,
+            font=("Segoe UI", 10, "bold"),
+            width=7,
             relief="flat",
             bg=ACCENT_BLUE,
             fg="#ffffff",
@@ -195,9 +215,9 @@ class ClockCard(tk.Frame):
 
         self.check_button = tk.Button(
             self.controls,
-            text="⟳",
-            font=("Segoe UI Symbol", 11),
-            width=2,
+            text="Check-in",
+            font=("Segoe UI", 10),
+            width=8,
             relief="groove",
             bg="#ffffff",
             fg=TEXT_SECONDARY,
@@ -349,7 +369,7 @@ class ClockCard(tk.Frame):
         label._rounded_bg = canvas  # type: ignore[attr-defined]
 
     def _pause_icon(self) -> str:
-        return "▶" if self.clock.paused else "❚❚"
+        return "Resume" if self.clock.paused else "Pause"
 
     def _expand_icon(self) -> str:
         return "⌄" if self.clock.expanded else "⤢"
@@ -357,23 +377,35 @@ class ClockCard(tk.Frame):
     def _interval_text(self) -> str:
         minutes = self.clock.interval_minutes
         unit = "min" if minutes == 1 else "min"
-        return f"🔁 Every {minutes} {unit}"
+        if self.clock.due:
+            status = "Ready now"
+            prefix = "⚡"
+        elif self.clock.paused:
+            status = "Paused"
+            prefix = "⏸"
+        else:
+            status = "Running"
+            prefix = "🔁"
+        return f"{prefix} Every {minutes} {unit} • {status}"
+
+    def _next_ping_text(self) -> str:
+        if self.clock.due:
+            return "Awaiting your check-in"
+        if self.clock.paused:
+            return "Paused — resume to continue"
+        remaining = max(self.clock.remaining_seconds(), 0.0)
+        if remaining <= 0:
+            return "Next reminder momentarily"
+        remaining_int = max(int(math.ceil(remaining)), 0)
+        minutes, seconds = divmod(remaining_int, 60)
+        if minutes >= 1:
+            return f"Next reminder in {minutes}m {seconds:02d}s"
+        return f"Next reminder in {seconds}s"
 
     def _detail_text(self) -> str:
         count = self.clock.check_ins_today
         suffix = "check-ins today" if count != 1 else "check-in today"
-        remaining = self.clock.remaining_seconds()
-        remaining_int = max(int(math.ceil(remaining)), 0)
-        minutes, seconds = divmod(remaining_int, 60)
-        if remaining == 0 and not self.clock.due:
-            next_ping = "Next reminder soon"
-        elif self.clock.due:
-            next_ping = "Awaiting your check-in"
-        else:
-            if minutes >= 1:
-                next_ping = f"Next reminder in {minutes}m {seconds:02d}s"
-            else:
-                next_ping = f"Next reminder in {seconds}s"
+        next_ping = self._next_ping_text()
         return f"{count} {suffix}\n{next_ping}"
 
     def _handle_task_update(self, event: tk.Event) -> str | None:
@@ -469,14 +501,20 @@ class ClockCard(tk.Frame):
         )
         self.interval_label.pack_configure(pady=(0, max(4, int(6 * scale))))
 
-        button_font = max(8, int(11 * scale))
+        countdown_font = max(8, int(10 * scale))
+        self.countdown_label.configure(
+            font=("Segoe UI", countdown_font),
+            wraplength=max(100, size + int(20 * scale)),
+        )
+        self.countdown_label.pack_configure(pady=(0, max(4, int(6 * scale))))
+
         self.pause_button.configure(
-            font=("Segoe UI Symbol", button_font),
-            width=max(2, int(2 * scale)),
+            font=("Segoe UI", max(9, int(10 * scale)), "bold"),
+            width=max(6, int(7 * scale)),
         )
         self.check_button.configure(
-            font=("Segoe UI Symbol", button_font),
-            width=max(2, int(2 * scale)),
+            font=("Segoe UI", max(9, int(9 * scale))),
+            width=max(7, int(8 * scale)),
         )
         self.controls.pack_configure(pady=(0, max(4, int(6 * scale))))
 
@@ -516,6 +554,11 @@ class ClockCard(tk.Frame):
         self._is_due = value
         color = ACCENT_BLUE_DUE if value else ACCENT_BLUE
         self.ring_canvas.itemconfigure(self.progress_arc, outline=color)
+        border_color = ACCENT_BLUE_DUE if value else CARD_BORDER
+        self.card.configure(highlightbackground=border_color, highlightcolor=border_color)
+        text_color = ACCENT_BLUE if value else TEXT_SECONDARY
+        self.countdown_label.configure(fg=text_color, text=self._next_ping_text())
+        self.interval_label.configure(text=self._interval_text())
         self._apply_check_base_state()
 
     def update_progress(self) -> None:
@@ -527,6 +570,7 @@ class ClockCard(tk.Frame):
         self.pause_button.configure(text=self._pause_icon())
         self.expand_btn.configure(text=self._expand_icon())
         self.interval_label.configure(text=self._interval_text())
+        self.countdown_label.configure(text=self._next_ping_text())
         self.summary_label.configure(text=self._detail_text())
         self.set_due(self.clock.due)
         self._apply_check_base_state()
