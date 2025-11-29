@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - `src/kensho/` holds the application code: `app.py` bootstraps the Tk UI, `models.py` contains timer logic, `notifications.py` and `storage.py` wrap Windows-oriented toasts and state I/O.
 - UI widgets live in `src/kensho/ui/`, with `clock_card.py` and `settings_dialog.py` composing the interface.
-- Persisted data is written to `data/app_state.json` at runtime; the directory is created on demand.
+- Persisted data is written to `%APPDATA%\Kensho\app_state.json` by default (override with `KENSHO_DATA_DIR` during development).
 - No dedicated test suite or assets directory exists yet—add new modules under `src/` and keep UI elements grouped in `ui/`.
 
 ## Build, Test, and Development Commands
@@ -11,6 +11,7 @@
 - `pip install -r requirements.txt` installs the lone runtime dependency (`win10toast`).
 - `python -m src.kensho.app` launches the desktop app with the current UI changes.
 - `python3 -m compileall src` provides a quick syntax check across modules when running in WSL or other POSIX shells.
+- `packaging\build_windows_exe.bat [python]` runs PyInstaller with the given interpreter (defaults to `python`) and writes the distributable to `dist\Kensho`.
 
 ## Coding Style & Naming Conventions
 - Follow PEP 8 with 4-space indentation, type hints where practical, and descriptive function names (`_set_minimal_mode`, `_refresh_identifier_labels`).

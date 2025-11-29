@@ -3,12 +3,32 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
-# Directory paths
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-APP_STATE_FILE = DATA_DIR / "app_state.json"
+APP_NAME = "Kensho"
+APP_STATE_FILENAME = "app_state.json"
+
+
+def _default_data_dir() -> Path:
+    """Determine a writable directory for persisted data."""
+    override = os.getenv("KENSHO_DATA_DIR")
+    if override:
+        return Path(override).expanduser()
+
+    if sys.platform.startswith("win"):
+        base = os.getenv("APPDATA") or os.getenv("LOCALAPPDATA")
+        if base:
+            return Path(base) / APP_NAME
+
+    home = Path.home()
+    return home / f".{APP_NAME.lower()}"
+
+
+DATA_DIR = _default_data_dir()
+APP_STATE_FILE = DATA_DIR / APP_STATE_FILENAME
 
 
 def ensure_data_dir() -> None:

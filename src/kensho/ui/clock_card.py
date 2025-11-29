@@ -24,12 +24,14 @@ MIN_SCALE = 0.5
 MAX_SCALE = 1.2
 BASE_CARD_WIDTH = CANVAS_SIZE + 96
 CARD_BORDER = "#d9dde2"
+BASE_CARD_HEIGHT = CANVAS_SIZE + 200
 
 
 class ClockCard(tk.Frame):
     """Encapsulates the circular timer UI and controls."""
 
     BASE_WIDTH = BASE_CARD_WIDTH
+    BASE_HEIGHT = BASE_CARD_HEIGHT
     MIN_SCALE = MIN_SCALE
     MAX_SCALE = MAX_SCALE
 
