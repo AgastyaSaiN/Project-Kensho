@@ -1,0 +1,49 @@
+/* Global Dark Theme */
+QMainWindow {
+    background-color: #1a1a1a;
+}
+
+QWidget {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+/* Sidebar */
+QFrame#Sidebar {
+    background-color: #2b2b2b;
+    border-right: 1px solid #333;
+}
+
+QLabel#Logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8b5cf6; /* Purple Accent */
+    padding: 20px;
+}
+
+/* Navigation Buttons */
+QPushButton.NavButton {
+    background-color: transparent;
+    border: none;
+    color: #a0a0a0;
+    text-align: left;
+    padding: 15px 20px;
+    font-size: 16px;
+}
+
+QPushButton.NavButton:hover {
+    background-color: #333;
+    color: #fff;
+}
+
+QPushButton.NavButton:checked {
+    background-color: #333;
+    color: #8b5cf6;
+    border-left: 3px solid #8b5cf6;
+}
+
+/* Content Area */
+QFrame#ContentArea {
+    background-color: transparent;
+}
