@@ -88,13 +88,34 @@ class ClockCard(QFrame):
         self._on_paused_changed(True)
 
     def _on_edit(self):
-        from PySide6.QtWidgets import QInputDialog
-        minutes, ok = QInputDialog.getInt(
-            self, "Edit Timer", "Duration (minutes):", 
-            value=self.clock._interval_minutes, minValue=1, maxValue=180
-        )
-        if ok:
-            self.clock.update_interval(minutes)
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QDoubleSpinBox, QLineEdit, QDialogButtonBox
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Edit Timer")
+        layout = QVBoxLayout(dialog)
+        form = QFormLayout()
+        
+        spin_minutes = QDoubleSpinBox()
+        spin_minutes.setRange(0.1, 180.0)
+        spin_minutes.setSingleStep(0.1)
+        spin_minutes.setValue(float(self.clock._interval_minutes))
+        
+        edit_message = QLineEdit()
+        edit_message.setText(self.clock.completion_message)
+        edit_message.setPlaceholderText("Message when done (e.g. Take a break)")
+        
+        form.addRow("Duration (min):", spin_minutes)
+        form.addRow("Completion Message:", edit_message)
+        layout.addLayout(form)
+        
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        if dialog.exec():
+            self.clock.update_interval(spin_minutes.value())
+            self.clock.completion_message = edit_message.text()
 
     def _on_tick(self, progress):
         self.time_label.setText(self.clock.time_text)

@@ -11,6 +11,7 @@ class ClockUnit(QObject):
         self._identifier = identifier
         self._label = label
         self._interval_minutes = interval_minutes
+        self._completion_message = "Time's up!" # Default message
         self._elapsed_seconds = 0.0
         self._paused = True
         self._due = False
@@ -31,6 +32,14 @@ class ClockUnit(QObject):
     @label.setter
     def label(self, value):
         self._label = value
+
+    @Property(str)
+    def completion_message(self):
+        return self._completion_message
+    
+    @completion_message.setter
+    def completion_message(self, value):
+        self._completion_message = value
 
     @Property(float)
     def progress(self):
@@ -70,9 +79,9 @@ class ClockUnit(QObject):
         else:
             self.pause()
 
-    def update_interval(self, minutes: int):
+    def update_interval(self, minutes: float):
         self.pause()
-        self._interval_minutes = minutes
+        self._interval_minutes = float(minutes)
         self.reset()
         # Force UI update
         self.ticked.emit(0.0)
@@ -96,6 +105,7 @@ class ClockUnit(QObject):
             "identifier": self._identifier,
             "label": self._label,
             "interval_minutes": self._interval_minutes,
+            "completion_message": self._completion_message,
             "elapsed_seconds": self._elapsed_seconds,
             "paused": self._paused,
             "due": self._due
@@ -108,6 +118,7 @@ class ClockUnit(QObject):
             label=data.get("label", "New Clock"),
             interval_minutes=data.get("interval_minutes", 25)
         )
+        clock._completion_message = data.get("completion_message", "Time's up!")
         clock._elapsed_seconds = data.get("elapsed_seconds", 0.0)
         clock._paused = data.get("paused", True)
         clock._due = data.get("due", False)
