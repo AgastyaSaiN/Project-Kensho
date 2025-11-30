@@ -19,6 +19,8 @@ class CircularTimer(ctk.CTkCanvas):
         self.on_change = on_change
         self._value = initial_value
         self._is_dragging = False
+        self._pulsing = False
+        self._current_stroke_width = stroke_width
         
         # Colors (can be made configurable)
         self.bg_color = "#2b2b2b" # Track color
@@ -133,3 +135,89 @@ class CircularTimer(ctk.CTkCanvas):
         
         if self.on_change:
             self.on_change(value)
+
+    def start_pulse(self):
+        if not self._pulsing:
+            self._pulsing = True
+            self._pulse_start_time = 0
+            self._animate_pulse()
+
+    def stop_pulse(self):
+        self._pulsing = False
+        # Reset stroke width
+        self._draw()
+
+    def _animate_pulse(self):
+        if not self._pulsing:
+            return
+            
+        # Simple sine wave breathing
+        import time
+        import math
+        
+        t = time.time() * 2 # Speed
+        # Oscillate stroke width between base and base+4
+        base_width = self.stroke_width
+        extra = (math.sin(t) + 1) * 2 # 0 to 4
+        
+        current_width = base_width + extra
+        
+        # Redraw only the arc with new width? 
+        # Full redraw is safer for now to keep handles aligned, 
+        # though slightly more expensive.
+        
+        # We can optimize by just updating the arc coords/width if we saved the item ID.
+        # But _draw() is fast enough for this simple shape.
+        
+        # We need to pass the dynamic width to _draw, or set a temporary property.
+        self._current_stroke_width = current_width
+        self._draw(pulse_width=current_width)
+        
+        self.after(50, self._animate_pulse)
+
+    def _draw(self, pulse_width=None):
+        self.delete("all")
+        
+        width_to_use = pulse_width if pulse_width is not None else self.stroke_width
+        
+        # Background Ring
+        self.create_oval(
+            self.center_x - self.radius,
+            self.center_y - self.radius,
+            self.center_x + self.radius,
+            self.center_y + self.radius,
+            width=self.stroke_width, # Background stays constant? Or pulses too? Let's keep bg constant.
+            outline=self.bg_color
+        )
+        
+        # Progress Arc
+        start_angle = 90
+        extent = -360 * self._value
+        
+        if self._value > 0:
+            self.create_arc(
+                self.center_x - self.radius,
+                self.center_y - self.radius,
+                self.center_x + self.radius,
+                self.center_y + self.radius,
+                start=start_angle,
+                extent=extent,
+                style="arc",
+                width=width_to_use,
+                outline=self.fg_color
+            )
+            
+        # Handle (Knob)
+        angle_rad = math.radians(start_angle + extent)
+        handle_x = self.center_x + self.radius * math.cos(angle_rad)
+        handle_y = self.center_y - self.radius * math.sin(angle_rad)
+        
+        r_handle = width_to_use # Handle grows with pulse
+        self.create_oval(
+            handle_x - r_handle/2, # Adjust radius
+            handle_y - r_handle/2,
+            handle_x + r_handle/2,
+            handle_y + r_handle/2,
+            fill=self.handle_color,
+            outline=""
+        )

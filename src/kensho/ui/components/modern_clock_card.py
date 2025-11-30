@@ -125,22 +125,31 @@ class ModernClockCard(ctk.CTkFrame):
 
     def update_state(self):
         """Called by parent loop to refresh UI based on model state"""
-        self.timer_canvas.set_value(self.clock.progress_ratio())
-        self.time_label.configure(text=self._get_time_text())
-        self._update_ui_state()
+        try:
+            if not self.winfo_exists():
+                return
+            self.timer_canvas.set_value(self.clock.progress_ratio())
+            self.time_label.configure(text=self._get_time_text())
+            self._update_ui_state()
+        except Exception:
+            pass
 
     def _update_ui_state(self):
         # Update button text
         if self.clock.paused:
              self.btn_toggle.configure(text="Resume")
+             self.timer_canvas.stop_pulse()
         elif self.clock.elapsed_seconds == 0:
              self.btn_toggle.configure(text="Start")
+             self.timer_canvas.stop_pulse()
         else:
              self.btn_toggle.configure(text="Pause")
+             self.timer_canvas.start_pulse()
              
         # Update colors based on state
         if self.clock.due:
             self.timer_canvas.fg_color = "#ef4444" # Red
+            self.timer_canvas.stop_pulse() # Stop pulsing when due
         else:
             self.timer_canvas.fg_color = "#2cc985" # Teal
 
