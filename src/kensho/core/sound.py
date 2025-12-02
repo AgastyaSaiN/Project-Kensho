@@ -1,12 +1,20 @@
 import os
+import sys
 from pathlib import Path
 from typing import List
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QSoundEffect
 
 class SoundManager:
-    _sounds_dir = Path(__file__).parent.parent / "resources" / "sounds"
     _effect = None
+    
+    # Handle PyInstaller path
+    if getattr(sys, 'frozen', False):
+        _base_path = Path(sys._MEIPASS) / "src" / "kensho" / "resources"
+    else:
+        _base_path = Path(__file__).parent.parent / "resources"
+        
+    _sounds_dir = _base_path / "sounds"
 
     @classmethod
     def get_available_sounds(cls) -> List[str]:
