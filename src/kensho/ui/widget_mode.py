@@ -69,6 +69,7 @@ class NotificationWindow(QWidget):
         self.move(parent_pos.x() + parent_width + 15, parent_pos.y())
 
 from ..core.sound import SoundManager
+from ..core.history import HistoryManager
 
 class WidgetMode(QWidget):
     restore_requested = Signal()
@@ -76,6 +77,7 @@ class WidgetMode(QWidget):
     def __init__(self, clocks: List[ClockUnit], sound_preference: str = "System Exclamation"):
         super().__init__()
         self.sound_preference = sound_preference
+        self.history_manager = HistoryManager()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(220, 220)
@@ -137,6 +139,9 @@ class WidgetMode(QWidget):
     def show_notification(self, clock, index):
         # Play Sound
         SoundManager.play_sound(self.sound_preference)
+        
+        # Log History
+        self.history_manager.log_session(clock.label, clock._interval_minutes)
         
         # Get color from rings component
         colors = self.rings.colors

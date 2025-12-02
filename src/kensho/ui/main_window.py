@@ -6,6 +6,7 @@ from ..core.models import ClockUnit
 from ..core.state import AppState
 
 from .views.settings import SettingsView
+from .views.history import HistoryView
 from ..core.sound import SoundManager
 
 class MainWindow(QMainWindow):
@@ -73,8 +74,7 @@ class MainWindow(QMainWindow):
         # Views
         self.dashboard_view = DashboardView(self.clocks)
         
-        self.history_view = QLabel("History View")
-        self.history_view.setAlignment(Qt.AlignCenter)
+        self.history_view = HistoryView()
         
         self.settings_view = SettingsView(self.sound_preference)
         
