@@ -1,8 +1,13 @@
 import sys
 import os
 
-# Add src to path so we can import kensho package
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure we have the absolute path to the directory containing this script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, 'src')
+
+# Insert at the beginning of sys.path to prioritize local modules
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 from kensho.app import main
 
