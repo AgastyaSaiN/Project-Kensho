@@ -5,6 +5,9 @@ from .dashboard import DashboardView
 from ..core.models import ClockUnit
 from ..core.state import AppState
 
+from .views.settings import SettingsView
+from ..core.sound import SoundManager
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -14,8 +17,11 @@ class MainWindow(QMainWindow):
         # State Management
         self.app_state = AppState()
         
-        # Load Clocks
-        clock_data = self.app_state.load_state()
+        # Load State
+        state_data = self.app_state.load_state()
+        
+        # Clocks
+        clock_data = state_data.get("clocks", [])
         if clock_data:
             self.clocks = [ClockUnit.from_dict(d) for d in clock_data]
         else:
@@ -25,6 +31,9 @@ class MainWindow(QMainWindow):
                 ClockUnit("c2", "Rest", 15),
                 ClockUnit("c3", "Quick Focus", 25)
             ]
+            
+        # Settings
+        self.sound_preference = state_data.get("sound", "System Exclamation")
 
         # Central Widget & Main Layout
         central_widget = QWidget()
@@ -67,8 +76,7 @@ class MainWindow(QMainWindow):
         self.history_view = QLabel("History View")
         self.history_view.setAlignment(Qt.AlignCenter)
         
-        self.settings_view = QLabel("Settings View")
-        self.settings_view.setAlignment(Qt.AlignCenter)
+        self.settings_view = SettingsView(self.sound_preference)
         
         self.content_area.addWidget(self.dashboard_view)
         self.content_area.addWidget(self.history_view)
@@ -126,8 +134,11 @@ class MainWindow(QMainWindow):
         clocks = self.dashboard_view.clocks
         if not clocks: return
         
+        # Update sound preference from settings view
+        self.sound_preference = self.settings_view.current_sound
+        
         self.hide()
-        self.widget_window = WidgetMode(clocks)
+        self.widget_window = WidgetMode(clocks, self.sound_preference)
         self.widget_window.restore_requested.connect(self.exit_widget_mode)
         self.widget_window.show()
 
@@ -145,7 +156,11 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'dashboard_view'):
             self.clocks = self.dashboard_view.clocks
             
-        self.app_state.save_state(self.clocks)
+        # Get latest sound preference
+        if hasattr(self, 'settings_view'):
+            self.sound_preference = self.settings_view.current_sound
+            
+        self.app_state.save_state(self.clocks, self.sound_preference)
         
         # Close widget window if open
         if self.widget_window:

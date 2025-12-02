@@ -14,23 +14,27 @@ class AppState:
         if not self.app_dir.exists():
             self.app_dir.mkdir(parents=True)
 
-    def load_state(self) -> List[Dict[str, Any]]:
-        """Loads clock data from JSON file."""
+    def load_state(self) -> Dict[str, Any]:
+        """Loads app state from JSON file."""
         if not self.state_file.exists():
-            return []
+            return {"clocks": [], "sound": "System Exclamation"}
         
         try:
             with open(self.state_file, 'r') as f:
                 data = json.load(f)
-                return data.get("clocks", [])
+                # Ensure defaults
+                if "sound" not in data:
+                    data["sound"] = "System Exclamation"
+                return data
         except (json.JSONDecodeError, IOError) as e:
             print(f"Error loading state: {e}")
-            return []
+            return {"clocks": [], "sound": "System Exclamation"}
 
-    def save_state(self, clocks: List[ClockUnit]):
-        """Saves clock data to JSON file."""
+    def save_state(self, clocks: List[ClockUnit], sound_preference: str):
+        """Saves app state to JSON file."""
         data = {
-            "clocks": [clock.to_dict() for clock in clocks]
+            "clocks": [clock.to_dict() for clock in clocks],
+            "sound": sound_preference
         }
         
         try:
