@@ -9,17 +9,19 @@ A minimalist, Zen-inspired focus timer application built with Python and PySide6
 - **History**: Track your daily focus sessions.
 - **Persistence**: Auto-save state.
 
-## � Build (Single-File EXE)
+## 💿 Build (Windows Installer)
 
-To create a standalone `Kensho.exe` that runs on any Windows PC without installation:
+To create a professional Windows Installer (`.msi`) that installs Kensho to Program Files:
 
 1.  **Build**:
     ```powershell
-    python build.py
+    python setup.py bdist_msi
     ```
-2.  **Run**:
-    - The output file is `dist/Kensho.exe`.
-    - You can move this file anywhere (Desktop, USB drive, etc.) and run it.
+2.  **Install**:
+    - The output file is `dist/Kensho-1.0-win64.msi`.
+    - Double-click to install.
+    - It creates shortcuts on your **Desktop** and **Start Menu**.
+    - You can uninstall it via Windows Settings like any other app.
 
 ### Persistence
 Your clocks and history are saved in `~/.kensho` (User Home Directory) and persist between runs.
