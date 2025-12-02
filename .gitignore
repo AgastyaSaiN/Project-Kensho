@@ -32,8 +32,8 @@ env/
 venv/
 
 # Build
-build/
-dist/
+# build/
+# dist/
 *.egg-info/
 
 # App state
