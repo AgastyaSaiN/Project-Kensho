@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  kensho:
+    build: .
+    image: kensho:latest
+    container_name: kensho_app
+    environment:
+      - DISPLAY=host.docker.internal:0
+      - QT_DEBUG_PLUGINS=0
+    volumes:
+      # Persist application state
+      - kensho_data:/root/.kensho
+      # Map X11 socket (Linux only, but harmless on Windows)
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    network_mode: host
+
+volumes:
+  kensho_data:
