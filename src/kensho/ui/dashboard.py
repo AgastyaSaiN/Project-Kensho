@@ -5,7 +5,7 @@ from ..core.models import ClockUnit
 from .components.clock_card import ClockCard
 
 class DashboardView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, clocks=None, parent=None):
         super().__init__(parent)
         
         layout = QVBoxLayout(self)
@@ -53,17 +53,24 @@ class DashboardView(QWidget):
         # State
         self.clocks = []
         
-        # Add initial clock
-        self.add_clock()
+        # Load initial clocks or add default
+        if clocks:
+            for clock in clocks:
+                self.add_clock(clock)
+        else:
+            self.add_clock()
 
-    def add_clock(self):
-        idx = len(self.clocks) + 1
-        clock = ClockUnit(f"C{idx}", f"Session {idx}", 25)
+    def add_clock(self, clock=None):
+        if clock is None or isinstance(clock, bool):
+            idx = len(self.clocks) + 1
+            clock = ClockUnit(f"C{idx}", f"Session {idx}", 25)
+            
         card = ClockCard(clock)
         
         # Grid Logic (2 columns?)
-        row = (idx - 1) // 2
-        col = (idx - 1) % 2
+        idx = len(self.clocks)
+        row = idx // 2
+        col = idx % 2
         
         self.grid_layout.addWidget(card, row, col)
         self.clocks.append(clock)

@@ -2,13 +2,30 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QLabel, QFrame, QStackedWidget)
 from PySide6.QtCore import Qt, QSize
 from .dashboard import DashboardView
+from ..core.models import ClockUnit
+from ..core.state import AppState
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Kenshō")
-        self.resize(1000, 700)
+        self.resize(1000, 700) # Slightly smaller default
         
+        # State Management
+        self.app_state = AppState()
+        
+        # Load Clocks
+        clock_data = self.app_state.load_state()
+        if clock_data:
+            self.clocks = [ClockUnit.from_dict(d) for d in clock_data]
+        else:
+            # Default Clocks
+            self.clocks = [
+                ClockUnit("c1", "Deep Work", 45),
+                ClockUnit("c2", "Rest", 15),
+                ClockUnit("c3", "Quick Focus", 25)
+            ]
+
         # Central Widget & Main Layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -45,7 +62,7 @@ class MainWindow(QMainWindow):
         self.content_area.setObjectName("ContentArea")
         
         # Views
-        self.dashboard_view = DashboardView()
+        self.dashboard_view = DashboardView(self.clocks)
         
         self.history_view = QLabel("History View")
         self.history_view.setAlignment(Qt.AlignCenter)
@@ -121,3 +138,17 @@ class MainWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def closeEvent(self, event):
+        # Save state on exit
+        # Get latest clocks from dashboard
+        if hasattr(self, 'dashboard_view'):
+            self.clocks = self.dashboard_view.clocks
+            
+        self.app_state.save_state(self.clocks)
+        
+        # Close widget window if open
+        if self.widget_window:
+            self.widget_window.close()
+            
+        super().closeEvent(event)
