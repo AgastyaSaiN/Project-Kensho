@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QScrollArea, QGridLayout, 
-                               QPushButton, QFrame)
+                               QPushButton, QFrame, QMessageBox)
 from PySide6.QtCore import Qt
 from ..core.models import ClockUnit
 from .components.clock_card import ClockCard
@@ -51,26 +51,43 @@ class DashboardView(QWidget):
         layout.addWidget(self.btn_add)
         
         # State
-        self.clocks = []
+        self.clocks = clocks if clocks is not None else []
         
-        # Load initial clocks or add default
-        if clocks:
-            for clock in clocks:
-                self.add_clock(clock)
-        else:
-            self.add_clock()
+        # Initial Render
+        self.refresh_grid()
 
-    def add_clock(self, clock=None):
-        if clock is None or isinstance(clock, bool):
-            idx = len(self.clocks) + 1
-            clock = ClockUnit(f"C{idx}", f"Session {idx}", 25)
+    def refresh_grid(self):
+        # Clear existing items
+        for i in reversed(range(self.grid_layout.count())): 
+            widget = self.grid_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+        
+        # Rebuild Grid
+        for i, clock in enumerate(self.clocks):
+            card = ClockCard(clock)
+            card.delete_requested.connect(self.remove_clock)
             
-        card = ClockCard(clock)
-        
-        # Grid Logic (2 columns?)
-        idx = len(self.clocks)
-        row = idx // 2
-        col = idx % 2
-        
-        self.grid_layout.addWidget(card, row, col)
-        self.clocks.append(clock)
+            row = i // 2
+            col = i % 2
+            self.grid_layout.addWidget(card, row, col)
+
+    def add_clock(self, checked=False):
+        idx = len(self.clocks) + 1
+        new_clock = ClockUnit(f"C{idx}", f"Session {idx}", 25)
+        self.clocks.append(new_clock)
+        self.refresh_grid()
+
+    def remove_clock(self, clock):
+        reply = QMessageBox.question(
+            self, 
+            "Delete Clock", 
+            f"Are you sure you want to delete '{clock.label}'?",
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            if clock in self.clocks:
+                self.clocks.remove(clock)
+                self.refresh_grid()

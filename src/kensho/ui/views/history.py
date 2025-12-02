@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QScrollArea,
                                QFrame, QHBoxLayout)
 from PySide6.QtCore import Qt, QTimer
 from datetime import datetime
-from ..core.history import HistoryManager
+from ...core.history import HistoryManager
 
 class HistoryView(QWidget):
     def __init__(self, parent=None):

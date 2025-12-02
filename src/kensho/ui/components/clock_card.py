@@ -1,9 +1,11 @@
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QProgressBar, QWidget)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from ...core.models import ClockUnit
 
 class ClockCard(QFrame):
+    delete_requested = Signal(object) # Emits the ClockUnit
+
     def __init__(self, clock: ClockUnit, parent=None):
         super().__init__(parent)
         self.clock = clock
@@ -70,6 +72,13 @@ class ClockCard(QFrame):
         self.btn_edit.setCursor(Qt.PointingHandCursor)
         self.btn_edit.clicked.connect(self._on_edit)
         
+        self.btn_delete = QPushButton("🗑️")
+        self.btn_delete.setCursor(Qt.PointingHandCursor)
+        self.btn_delete.setToolTip("Delete Clock")
+        self.btn_delete.setFixedWidth(30)
+        self.btn_delete.setStyleSheet("color: #ff5555; font-size: 14px;")
+        self.btn_delete.clicked.connect(lambda: self.delete_requested.emit(self.clock))
+        
         self.btn_reset = QPushButton("Reset")
         self.btn_reset.setCursor(Qt.PointingHandCursor)
         self.btn_reset.clicked.connect(self.clock.reset)
@@ -77,6 +86,7 @@ class ClockCard(QFrame):
         controls_layout.addWidget(self.btn_toggle)
         controls_layout.addWidget(self.btn_edit)
         controls_layout.addWidget(self.btn_reset)
+        controls_layout.addWidget(self.btn_delete)
         layout.addLayout(controls_layout)
         
         # Connect Signals
@@ -95,6 +105,10 @@ class ClockCard(QFrame):
         layout = QVBoxLayout(dialog)
         form = QFormLayout()
         
+        edit_name = QLineEdit()
+        edit_name.setText(self.clock.label)
+        edit_name.setPlaceholderText("Clock Name (e.g. Deep Work)")
+
         spin_minutes = QDoubleSpinBox()
         spin_minutes.setRange(0.1, 180.0)
         spin_minutes.setSingleStep(0.1)
@@ -104,6 +118,7 @@ class ClockCard(QFrame):
         edit_message.setText(self.clock.completion_message)
         edit_message.setPlaceholderText("Message when done (e.g. Take a break)")
         
+        form.addRow("Name:", edit_name)
         form.addRow("Duration (min):", spin_minutes)
         form.addRow("Completion Message:", edit_message)
         layout.addLayout(form)
@@ -114,6 +129,8 @@ class ClockCard(QFrame):
         layout.addWidget(buttons)
         
         if dialog.exec():
+            self.clock.label = edit_name.text()
+            self.title_label.setText(self.clock.label)
             self.clock.update_interval(spin_minutes.value())
             self.clock.completion_message = edit_message.text()
 

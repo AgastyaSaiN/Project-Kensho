@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit
 from PySide6.QtCore import Qt, Signal, QPoint, QTimer
 from PySide6.QtGui import QColor
 from typing import List
@@ -6,14 +6,13 @@ from ..core.models import ClockUnit
 from .components.concentric_rings import ConcentricRings
 
 class NotificationWindow(QWidget):
-    def __init__(self, text: str, color: QColor, parent_pos: QPoint, parent_width: int, on_restart):
+    def __init__(self, message: str, color: QColor, parent_pos: QPoint, parent_width: int, on_restart):
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
         
         # Container for styling
         container = QWidget()
@@ -25,7 +24,7 @@ class NotificationWindow(QWidget):
             }}
             QLabel {{
                 color: {color.name()};
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
                 border: none;
                 background: transparent;
@@ -37,7 +36,7 @@ class NotificationWindow(QWidget):
                 border-radius: 4px;
                 padding: 4px 12px;
                 font-weight: bold;
-                font-size: 18px;
+                font-size: 16px;
             }}
             QPushButton:hover {{
                 background-color: white;
@@ -45,8 +44,10 @@ class NotificationWindow(QWidget):
         """)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(15, 15, 15, 15)
+        container_layout.setSpacing(10)
         
-        self.label = QLabel(text)
+        # Message
+        self.label = QLabel(message)
         self.label.setWordWrap(True)
         container_layout.addWidget(self.label)
         
@@ -56,11 +57,11 @@ class NotificationWindow(QWidget):
         self.btn_restart.setToolTip("Restart Timer")
         
         # Callback wrapper
-        def handle_restart():
+        def handle_click():
             on_restart()
             self.close()
             
-        self.btn_restart.clicked.connect(handle_restart)
+        self.btn_restart.clicked.connect(handle_click)
         container_layout.addWidget(self.btn_restart, 0, Qt.AlignRight)
         
         layout.addWidget(container)
