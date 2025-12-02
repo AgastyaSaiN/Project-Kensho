@@ -8,9 +8,16 @@ from PySide6.QtMultimedia import QSoundEffect
 class SoundManager:
     _effect = None
     
-    # Handle PyInstaller path
+    # Handle Frozen path (cx_Freeze or PyInstaller)
     if getattr(sys, 'frozen', False):
-        _base_path = Path(sys._MEIPASS) / "src" / "kensho" / "resources"
+        # PyInstaller uses _MEIPASS
+        if hasattr(sys, '_MEIPASS'):
+            _base_path = Path(sys._MEIPASS) / "src" / "kensho" / "resources"
+        else:
+            # cx_Freeze: Resources are relative to the executable
+            # We copied "src/kensho/resources" to "src/kensho/resources" in setup.py
+            # So it should be at {EXE_DIR}/src/kensho/resources
+            _base_path = Path(sys.executable).parent / "src" / "kensho" / "resources"
     else:
         _base_path = Path(__file__).parent.parent / "resources"
         
