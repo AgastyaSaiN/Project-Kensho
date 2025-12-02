@@ -2,6 +2,15 @@
 
 A minimalist, Zen-inspired focus timer application built with Python and PySide6.
 
+## ⬇️ Download & Install
+
+**The easiest way to use Kenshō is to download the installer.**
+
+1.  Go to the `dist/` folder (or Releases).
+2.  Download **`Kensho-1.0-win64.msi`**.
+3.  Double-click to install.
+4.  Launch **Kensho** from your Desktop or Start Menu.
+
 ## Features
 - **Concentric Timers**: Visual representation of multiple timers.
 - **Widget Mode**: Always-on-top, translucent mini-timer.
