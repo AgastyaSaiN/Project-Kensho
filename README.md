@@ -9,24 +9,17 @@ A minimalist, Zen-inspired focus timer application built with Python and PySide6
 - **History**: Track your daily focus sessions.
 - **Persistence**: Auto-save state.
 
-## 🐳 Running with Docker
+## � Build (Single-File EXE)
 
-This application is containerized for consistency.
+To create a standalone `Kensho.exe` that runs on any Windows PC without installation:
 
-### Prerequisites
-1.  **Docker Desktop** installed.
-2.  **X Server** (for Windows):
-    - Install [VcXsrv](https://sourceforge.net/projects/vcxsrv/).
-    - Launch **XLaunch** with these settings:
-        - **Multiple windows**
-        - **Start no client**
-        - **Disable access control** (Check this box!)
-
-### Run
-```bash
-docker-compose up --build
-```
-The application window should appear on your desktop.
+1.  **Build**:
+    ```powershell
+    python build.py
+    ```
+2.  **Run**:
+    - The output file is `dist/Kensho.exe`.
+    - You can move this file anywhere (Desktop, USB drive, etc.) and run it.
 
 ### Persistence
-Your clocks and history are saved in a Docker volume (`kensho_data`) and persist between restarts.
+Your clocks and history are saved in `~/.kensho` (User Home Directory) and persist between runs.
