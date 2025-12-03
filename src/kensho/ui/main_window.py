@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         logo_img.setAlignment(Qt.AlignCenter)
         logo_pixmap = QPixmap("src/kensho/resources/logo.png")
         if not logo_pixmap.isNull():
-            scaled_logo = logo_pixmap.scaledToWidth(100, Qt.SmoothTransformation)
+            scaled_logo = logo_pixmap.scaledToWidth(140, Qt.SmoothTransformation)
             logo_img.setPixmap(scaled_logo)
         logo_layout.addWidget(logo_img)
         
