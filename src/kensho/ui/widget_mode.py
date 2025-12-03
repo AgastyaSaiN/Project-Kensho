@@ -83,6 +83,10 @@ class WidgetMode(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(220, 220)
         
+        # Icon
+        from PySide6.QtGui import QIcon
+        self.setWindowIcon(QIcon("src/kensho/resources/icon.ico"))
+        
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
         

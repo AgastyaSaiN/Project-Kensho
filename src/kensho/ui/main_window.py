@@ -15,9 +15,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Kenshō")
         self.resize(1000, 700) # Slightly smaller default
         
-        # Icon (Placeholder)
-        # from PySide6.QtGui import QIcon
-        # self.setWindowIcon(QIcon(":/resources/icon.ico"))
+        # Icon
+        from PySide6.QtGui import QIcon, QPixmap
+        self.setWindowIcon(QIcon("src/kensho/resources/icon.ico"))
         
         # State Management
         self.app_state = AppState()
@@ -56,9 +56,21 @@ class MainWindow(QMainWindow):
         sidebar_layout.setSpacing(0)
         
         # Logo
-        logo = QLabel("Kenshō")
+        logo = QLabel()
         logo.setObjectName("Logo")
         logo.setAlignment(Qt.AlignCenter)
+        
+        # Load Logo Image
+        logo_pixmap = QPixmap("src/kensho/resources/logo.png")
+        if not logo_pixmap.isNull():
+            # Scale logo to fit nicely (e.g., 150px width)
+            scaled_logo = logo_pixmap.scaledToWidth(150, Qt.SmoothTransformation)
+            logo.setPixmap(scaled_logo)
+            logo.setContentsMargins(0, 20, 0, 20)
+        else:
+            # Fallback to text if image fails
+            logo.setText("Kenshō")
+            
         sidebar_layout.addWidget(logo)
         
         # Navigation
