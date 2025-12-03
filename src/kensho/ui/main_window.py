@@ -15,6 +15,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Kenshō")
         self.resize(1000, 700) # Slightly smaller default
         
+        # Icon (Placeholder)
+        # from PySide6.QtGui import QIcon
+        # self.setWindowIcon(QIcon(":/resources/icon.ico"))
+        
         # State Management
         self.app_state = AppState()
         

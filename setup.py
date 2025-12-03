@@ -39,6 +39,7 @@ setup(
             target_name="Kensho.exe",
             shortcut_name="Kensho",
             shortcut_dir="ProgramMenuFolder",
+            # icon="src/kensho/resources/icon.ico" # TODO: Uncomment when icon is ready
         )
     ],
 )
