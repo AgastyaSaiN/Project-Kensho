@@ -53,3 +53,11 @@ class HistoryManager:
                 json.dump(history, f, indent=4)
         except IOError as e:
             print(f"Error saving history: {e}")
+
+    def clear_history(self):
+        """Clears all history data."""
+        if self.history_file.exists():
+            try:
+                self.history_file.unlink()
+            except IOError as e:
+                print(f"Error clearing history: {e}")

@@ -77,6 +77,41 @@ class SettingsView(QWidget):
         sound_layout.addLayout(controls_layout)
         
         layout.addWidget(sound_frame)
+        
+        # Data Section
+        data_frame = QFrame()
+        data_frame.setStyleSheet("""
+            QFrame {
+                background-color: #2b2b2b;
+                border-radius: 10px;
+                padding: 20px;
+            }
+        """)
+        data_layout = QVBoxLayout(data_frame)
+        
+        lbl_data = QLabel("Data Management")
+        lbl_data.setStyleSheet("font-size: 16px; font-weight: bold; color: #ddd;")
+        data_layout.addWidget(lbl_data)
+        
+        self.btn_clear_history = QPushButton("Clear History")
+        self.btn_clear_history.setCursor(Qt.PointingHandCursor)
+        self.btn_clear_history.setStyleSheet("""
+            QPushButton {
+                background-color: #ef4444;
+                color: white;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #dc2626;
+            }
+        """)
+        self.btn_clear_history.clicked.connect(self._clear_history)
+        data_layout.addWidget(self.btn_clear_history, 0, Qt.AlignLeft)
+        
+        layout.addWidget(data_frame)
         layout.addStretch()
 
     def _on_sound_changed(self, text):
@@ -84,3 +119,19 @@ class SettingsView(QWidget):
 
     def _test_sound(self):
         SoundManager.play_sound(self.current_sound)
+
+    def _clear_history(self):
+        from PySide6.QtWidgets import QMessageBox
+        from ...core.history import HistoryManager
+        
+        reply = QMessageBox.question(
+            self, 
+            "Clear History", 
+            "Are you sure you want to delete all history? This cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            HistoryManager().clear_history()
+            QMessageBox.information(self, "Success", "History has been cleared.")
