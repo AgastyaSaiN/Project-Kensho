@@ -24,7 +24,12 @@ setup(
     name="Kensho",
     version="1.0",
     description="Zen-inspired Focus Timer",
-    options={"build_exe": build_exe_options},
+    options={
+        "build_exe": build_exe_options,
+        "bdist_msi": {
+            "install_icon": "src/kensho/resources/icon.ico",
+        }
+    },
     executables=[
         Executable(
             "run.py",
@@ -32,6 +37,7 @@ setup(
             target_name="Kensho.exe",
             shortcut_name="Kensho",
             shortcut_dir="DesktopFolder",
+            icon="src/kensho/resources/icon.ico"
         ),
         Executable(
             "run.py",

@@ -55,23 +55,28 @@ class MainWindow(QMainWindow):
         sidebar_layout.setContentsMargins(0, 0, 0, 0)
         sidebar_layout.setSpacing(0)
         
-        # Logo
-        logo = QLabel()
-        logo.setObjectName("Logo")
-        logo.setAlignment(Qt.AlignCenter)
+        # Logo Container
+        logo_container = QWidget()
+        logo_layout = QVBoxLayout(logo_container)
+        logo_layout.setContentsMargins(0, 20, 0, 20)
+        logo_layout.setSpacing(10)
         
-        # Load Logo Image
+        # Logo Image
+        logo_img = QLabel()
+        logo_img.setAlignment(Qt.AlignCenter)
         logo_pixmap = QPixmap("src/kensho/resources/logo.png")
         if not logo_pixmap.isNull():
-            # Scale logo to fit nicely (e.g., 150px width)
-            scaled_logo = logo_pixmap.scaledToWidth(150, Qt.SmoothTransformation)
-            logo.setPixmap(scaled_logo)
-            logo.setContentsMargins(0, 20, 0, 20)
-        else:
-            # Fallback to text if image fails
-            logo.setText("Kenshō")
-            
-        sidebar_layout.addWidget(logo)
+            scaled_logo = logo_pixmap.scaledToWidth(100, Qt.SmoothTransformation)
+            logo_img.setPixmap(scaled_logo)
+        logo_layout.addWidget(logo_img)
+        
+        # Logo Text
+        logo_text = QLabel("Kenshō")
+        logo_text.setObjectName("Logo") # Re-use styling
+        logo_text.setAlignment(Qt.AlignCenter)
+        logo_layout.addWidget(logo_text)
+        
+        sidebar_layout.addWidget(logo_container)
         
         # Navigation
         self.nav_dashboard = self._create_nav_button("Dashboard")
